@@ -1,0 +1,1898 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Neon Space Dodger</title>
+
+<style>
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family:
+        "Segoe UI",
+        system-ui,
+        sans-serif;
+
+    background:
+        radial-gradient(
+            circle at 50% 20%,
+            #132a55 0%,
+            #080d1d 45%,
+            #03050d 100%
+        );
+
+    color: white;
+}
+
+
+/* =========================================================
+   GAME WRAPPER
+   ========================================================= */
+
+#game-wrapper {
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    position: relative;
+}
+
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
+#topbar {
+    width: min(900px, 94vw);
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 18px 8px 10px;
+
+    z-index: 10;
+}
+
+.game-title {
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    font-weight: 900;
+
+    letter-spacing: 3px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #67e8f9,
+            #818cf8,
+            #c084fc
+        );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    color: transparent;
+
+    text-shadow:
+        0 0 25px rgba(103,232,249,0.3);
+}
+
+.stats {
+    display: flex;
+    gap: 10px;
+}
+
+.stat {
+    min-width: 105px;
+
+    padding: 8px 15px;
+
+    border: 1px solid rgba(103,232,249,0.2);
+
+    border-radius: 12px;
+
+    background:
+        rgba(8,15,32,0.72);
+
+    backdrop-filter: blur(12px);
+
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+
+    font-size: 0.65rem;
+
+    color: #7dd3fc;
+
+    letter-spacing: 1.5px;
+
+    text-transform: uppercase;
+}
+
+.stat-value {
+    display: block;
+
+    margin-top: 2px;
+
+    font-size: 1.1rem;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   CANVAS
+   ========================================================= */
+
+#game-container {
+    position: relative;
+
+    width: min(900px, 94vw);
+
+    flex: 1;
+
+    min-height: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    border-radius: 22px;
+
+    border: 1px solid rgba(103,232,249,0.22);
+
+    background:
+        linear-gradient(
+            180deg,
+            #071326,
+            #030714
+        );
+
+    box-shadow:
+        0 0 40px rgba(34,211,238,0.08),
+        inset 0 0 80px rgba(59,130,246,0.04);
+}
+
+
+/* =========================================================
+   OVERLAY
+   ========================================================= */
+
+#overlay {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    pointer-events: none;
+}
+
+.overlay-card {
+    pointer-events: auto;
+
+    width: min(430px, 88%);
+
+    padding: 35px 30px;
+
+    text-align: center;
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(10,20,42,0.94),
+            rgba(8,12,28,0.96)
+        );
+
+    border: 1px solid rgba(103,232,249,0.25);
+
+    box-shadow:
+        0 25px 80px rgba(0,0,0,0.65),
+        0 0 40px rgba(34,211,238,0.08);
+
+    backdrop-filter: blur(20px);
+
+    animation: appear 0.4s ease;
+}
+
+@keyframes appear {
+
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.overlay-icon {
+    font-size: 3.5rem;
+
+    margin-bottom: 10px;
+
+    filter:
+        drop-shadow(
+            0 0 15px rgba(34,211,238,0.7)
+        );
+}
+
+.overlay-card h1 {
+    font-size: 2rem;
+
+    margin-bottom: 10px;
+}
+
+.overlay-card p {
+    color: #94a3b8;
+
+    line-height: 1.7;
+
+    margin-bottom: 24px;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+button {
+    font-family: inherit;
+}
+
+.primary-btn {
+
+    border: none;
+
+    padding: 13px 30px;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    color: white;
+
+    font-weight: 800;
+
+    font-size: 1rem;
+
+    background:
+        linear-gradient(
+            135deg,
+            #06b6d4,
+            #6366f1
+        );
+
+    box-shadow:
+        0 10px 25px rgba(6,182,212,0.2);
+
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+.primary-btn:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 15px 35px rgba(99,102,241,0.35);
+}
+
+.primary-btn:active {
+    transform: scale(0.97);
+}
+
+
+/* =========================================================
+   CONTROLS
+   ========================================================= */
+
+#controls {
+
+    width: min(900px, 94vw);
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 10px 4px 15px;
+
+    color: #64748b;
+
+    font-size: 0.8rem;
+}
+
+.controls-hint {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.key {
+    padding: 4px 8px;
+
+    border-radius: 6px;
+
+    border: 1px solid #334155;
+
+    background: #0f172a;
+
+    color: #cbd5e1;
+
+    font-size: 0.7rem;
+
+    font-weight: 700;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.small-btn {
+
+    border: 1px solid #263a55;
+
+    background: rgba(8,15,32,0.8);
+
+    color: #94a3b8;
+
+    border-radius: 9px;
+
+    padding: 7px 13px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.small-btn:hover {
+
+    color: white;
+
+    border-color: #38bdf8;
+
+    background: #102039;
+}
+
+
+/* =========================================================
+   MOBILE CONTROLS
+   ========================================================= */
+
+#mobile-controls {
+
+    display: none;
+
+    position: absolute;
+
+    bottom: 20px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    z-index: 20;
+
+    gap: 12px;
+}
+
+.mobile-btn {
+
+    width: 58px;
+    height: 58px;
+
+    border-radius: 16px;
+
+    border: 1px solid rgba(103,232,249,0.25);
+
+    background:
+        rgba(8,15,32,0.85);
+
+    color: #67e8f9;
+
+    font-size: 1.4rem;
+
+    cursor: pointer;
+
+    backdrop-filter: blur(10px);
+}
+
+@media (max-width: 650px) {
+
+    #topbar {
+        padding-top: 10px;
+    }
+
+    .game-title {
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+    }
+
+    .stats {
+        gap: 5px;
+    }
+
+    .stat {
+        min-width: 75px;
+        padding: 6px 8px;
+    }
+
+    .stat-label {
+        font-size: 0.55rem;
+    }
+
+    .stat-value {
+        font-size: 0.9rem;
+    }
+
+    #mobile-controls {
+        display: flex;
+    }
+
+    #controls {
+        font-size: 0.7rem;
+    }
+
+    .controls-hint {
+        display: none;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div id="game-wrapper">
+
+    <!-- =====================================================
+         TOP BAR
+         ===================================================== -->
+
+    <div id="topbar">
+
+        <div class="game-title">
+            ✦ NEON SPACE DODGER
+        </div>
+
+        <div class="stats">
+
+            <div class="stat">
+                <span class="stat-label">
+                    Score
+                </span>
+
+                <span
+                    class="stat-value"
+                    id="score"
+                >
+                    0
+                </span>
+            </div>
+
+            <div class="stat">
+                <span class="stat-label">
+                    Best
+                </span>
+
+                <span
+                    class="stat-value"
+                    id="best"
+                >
+                    0
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         GAME
+         ===================================================== -->
+
+    <div id="game-container">
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="overlay">
+
+            <div class="overlay-card">
+
+                <div
+                    class="overlay-icon"
+                    id="overlay-icon"
+                >
+                    🚀
+                </div>
+
+                <h1 id="overlay-title">
+                    Neon Space Dodger
+                </h1>
+
+                <p id="overlay-text">
+                    Dodge the incoming asteroids,
+                    survive as long as possible,
+                    and beat your high score.
+                </p>
+
+                <button
+                    class="primary-btn"
+                    id="start-button"
+                >
+                    START MISSION
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- Mobile Controls -->
+
+        <div id="mobile-controls">
+
+            <button
+                class="mobile-btn"
+                id="left-button"
+            >
+                ◀
+            </button>
+
+            <button
+                class="mobile-btn"
+                id="right-button"
+            >
+                ▶
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CONTROLS
+         ===================================================== -->
+
+    <div id="controls">
+
+        <div class="controls-hint">
+
+            <span>MOVE</span>
+
+            <span class="key">
+                ←
+            </span>
+
+            <span class="key">
+                →
+            </span>
+
+            <span class="key">
+                A
+            </span>
+
+            <span class="key">
+                D
+            </span>
+
+            <span>to dodge</span>
+
+        </div>
+
+        <div class="control-buttons">
+
+            <button
+                class="small-btn"
+                id="pause-button"
+            >
+                ⏸ Pause
+            </button>
+
+            <button
+                class="small-btn"
+                id="restart-button"
+            >
+                ↻ Restart
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CANVAS SETUP
+   ========================================================= */
+
+const canvas =
+    document.getElementById("gameCanvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+const gameContainer =
+    document.getElementById("game-container");
+
+
+function resizeCanvas() {
+
+    const rect =
+        gameContainer.getBoundingClientRect();
+
+    const dpr =
+        Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.width =
+        rect.width * dpr;
+
+    canvas.height =
+        rect.height * dpr;
+
+    canvas.style.width =
+        rect.width + "px";
+
+    canvas.style.height =
+        rect.height + "px";
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+}
+
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
+
+
+/* =========================================================
+   GAME VARIABLES
+   ========================================================= */
+
+let gameRunning = false;
+
+let paused = false;
+
+let gameOver = false;
+
+let animationId = null;
+
+let score = 0;
+
+let bestScore =
+    Number(localStorage.getItem("neonDodgerBest")) || 0;
+
+let difficulty = 1;
+
+let spawnTimer = 0;
+
+let lastTime = 0;
+
+let stars = [];
+
+let asteroids = [];
+
+let particles = [];
+
+let keys = {
+    left: false,
+    right: false
+};
+
+
+/* =========================================================
+   PLAYER
+   ========================================================= */
+
+const player = {
+
+    x: 0,
+
+    y: 0,
+
+    width: 42,
+
+    height: 54,
+
+    speed: 7,
+
+    tilt: 0
+};
+
+
+/* =========================================================
+   UI
+   ========================================================= */
+
+const scoreElement =
+    document.getElementById("score");
+
+const bestElement =
+    document.getElementById("best");
+
+const overlay =
+    document.getElementById("overlay");
+
+const overlayTitle =
+    document.getElementById("overlay-title");
+
+const overlayText =
+    document.getElementById("overlay-text");
+
+const overlayIcon =
+    document.getElementById("overlay-icon");
+
+const startButton =
+    document.getElementById("start-button");
+
+const pauseButton =
+    document.getElementById("pause-button");
+
+const restartButton =
+    document.getElementById("restart-button");
+
+
+bestElement.textContent =
+    bestScore;
+
+
+/* =========================================================
+   UTILITY
+   ========================================================= */
+
+function random(min, max) {
+
+    return Math.random() * (max - min) + min;
+}
+
+
+function clamp(value, min, max) {
+
+    return Math.max(
+        min,
+        Math.min(max, value)
+    );
+}
+
+
+/* =========================================================
+   STARS
+   ========================================================= */
+
+function createStars() {
+
+    stars = [];
+
+    const width =
+        canvas.clientWidth;
+
+    const height =
+        canvas.clientHeight;
+
+    for (let i = 0; i < 100; i++) {
+
+        stars.push({
+
+            x: random(0, width),
+
+            y: random(0, height),
+
+            size: random(0.5, 2),
+
+            speed: random(0.3, 1.5),
+
+            opacity: random(0.2, 0.9)
+
+        });
+    }
+}
+
+
+function updateStars(delta) {
+
+    for (const star of stars) {
+
+        star.y +=
+            star.speed * delta * 0.08;
+
+        if (
+            star.y >
+            canvas.clientHeight
+        ) {
+
+            star.y = -5;
+
+            star.x =
+                random(
+                    0,
+                    canvas.clientWidth
+                );
+        }
+    }
+}
+
+
+function drawStars() {
+
+    for (const star of stars) {
+
+        ctx.beginPath();
+
+        ctx.arc(
+            star.x,
+            star.y,
+            star.size,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle =
+            `rgba(180,230,255,${star.opacity})`;
+
+        ctx.fill();
+    }
+}
+
+
+/* =========================================================
+   PLAYER DRAW
+   ========================================================= */
+
+function drawPlayer() {
+
+    const x = player.x;
+    const y = player.y;
+
+    ctx.save();
+
+    ctx.translate(
+        x,
+        y
+    );
+
+    ctx.rotate(
+        player.tilt
+    );
+
+
+    /* Glow */
+
+    ctx.shadowBlur = 25;
+
+    ctx.shadowColor =
+        "#22d3ee";
+
+
+    /* Main ship */
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            -player.height / 2,
+            0,
+            player.height / 2
+        );
+
+    gradient.addColorStop(
+        0,
+        "#67e8f9"
+    );
+
+    gradient.addColorStop(
+        0.45,
+        "#38bdf8"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#6366f1"
+    );
+
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        0,
+        -player.height / 2
+    );
+
+    ctx.lineTo(
+        -player.width / 2,
+        player.height / 2
+    );
+
+    ctx.lineTo(
+        0,
+        player.height / 2 - 12
+    );
+
+    ctx.lineTo(
+        player.width / 2,
+        player.height / 2
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    /* Cockpit */
+
+    ctx.shadowBlur = 10;
+
+    ctx.fillStyle =
+        "#e0f2fe";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        -8,
+        7,
+        11,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* Engine */
+
+    ctx.shadowBlur = 20;
+
+    ctx.shadowColor =
+        "#a855f7";
+
+    ctx.fillStyle =
+        "#c084fc";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        -8,
+        player.height / 2 - 3
+    );
+
+    ctx.lineTo(
+        0,
+        player.height / 2 + random(10, 19)
+    );
+
+    ctx.lineTo(
+        8,
+        player.height / 2 - 3
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    ctx.restore();
+}
+
+
+/* =========================================================
+   ASTEROIDS
+   ========================================================= */
+
+function spawnAsteroid() {
+
+    const size =
+        random(22, 48);
+
+    const width =
+        canvas.clientWidth;
+
+    asteroids.push({
+
+        x: random(
+            size,
+            width - size
+        ),
+
+        y: -size - 10,
+
+        size: size,
+
+        speed:
+            random(2.2, 4.2) *
+            (0.8 + difficulty * 0.22),
+
+        rotation:
+            random(0, Math.PI * 2),
+
+        rotationSpeed:
+            random(-0.035, 0.035),
+
+        points: random(7, 10)
+
+    });
+}
+
+
+function updateAsteroids(delta) {
+
+    for (
+        let i = asteroids.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const asteroid =
+            asteroids[i];
+
+        asteroid.y +=
+            asteroid.speed * delta * 0.06;
+
+        asteroid.rotation +=
+            asteroid.rotationSpeed * delta;
+
+        if (
+            asteroid.y -
+            asteroid.size >
+            canvas.clientHeight
+        ) {
+
+            asteroids.splice(i, 1);
+
+            score += 10;
+
+            updateScore();
+
+            continue;
+        }
+
+        if (
+            checkCollision(
+                player,
+                asteroid
+            )
+        ) {
+
+            endGame();
+
+            return;
+        }
+    }
+}
+
+
+function drawAsteroids() {
+
+    for (const asteroid of asteroids) {
+
+        ctx.save();
+
+        ctx.translate(
+            asteroid.x,
+            asteroid.y
+        );
+
+        ctx.rotate(
+            asteroid.rotation
+        );
+
+        ctx.shadowBlur = 18;
+
+        ctx.shadowColor =
+            "rgba(248,113,113,0.55)";
+
+
+        const gradient =
+            ctx.createRadialGradient(
+                -asteroid.size * 0.3,
+                -asteroid.size * 0.3,
+                2,
+                0,
+                0,
+                asteroid.size
+            );
+
+        gradient.addColorStop(
+            0,
+            "#fb7185"
+        );
+
+        gradient.addColorStop(
+            0.6,
+            "#c2415a"
+        );
+
+        gradient.addColorStop(
+            1,
+            "#581c2b"
+        );
+
+        ctx.fillStyle =
+            gradient;
+
+
+        ctx.beginPath();
+
+        for (
+            let i = 0;
+            i < asteroid.points;
+            i++
+        ) {
+
+            const angle =
+                (Math.PI * 2 / asteroid.points) * i;
+
+            const radius =
+                asteroid.size *
+                random(0.75, 1.08);
+
+            const x =
+                Math.cos(angle) * radius;
+
+            const y =
+                Math.sin(angle) * radius;
+
+            if (i === 0) {
+
+                ctx.moveTo(x, y);
+
+            } else {
+
+                ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.closePath();
+
+        ctx.fill();
+
+
+        /* Craters */
+
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle =
+            "rgba(30,10,20,0.3)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            -asteroid.size * 0.25,
+            -asteroid.size * 0.2,
+            asteroid.size * 0.16,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.beginPath();
+
+        ctx.arc(
+            asteroid.size * 0.25,
+            asteroid.size * 0.25,
+            asteroid.size * 0.12,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+
+/* =========================================================
+   PARTICLES
+   ========================================================= */
+
+function createExplosion(
+    x,
+    y,
+    count = 35
+) {
+
+    for (let i = 0; i < count; i++) {
+
+        const angle =
+            random(0, Math.PI * 2);
+
+        const speed =
+            random(1, 5);
+
+        particles.push({
+
+            x: x,
+
+            y: y,
+
+            vx:
+                Math.cos(angle) * speed,
+
+            vy:
+                Math.sin(angle) * speed,
+
+            life: random(25, 55),
+
+            size: random(1, 4)
+
+        });
+    }
+}
+
+
+function updateParticles(delta) {
+
+    for (
+        let i = particles.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const p =
+            particles[i];
+
+        p.x +=
+            p.vx * delta * 0.06;
+
+        p.y +=
+            p.vy * delta * 0.06;
+
+        p.life -=
+            delta * 0.06;
+
+        if (p.life <= 0) {
+
+            particles.splice(i, 1);
+        }
+    }
+}
+
+
+function drawParticles() {
+
+    for (const p of particles) {
+
+        ctx.save();
+
+        ctx.globalAlpha =
+            Math.max(0, p.life / 55);
+
+        ctx.fillStyle =
+            "#67e8f9";
+
+        ctx.shadowBlur = 12;
+
+        ctx.shadowColor =
+            "#22d3ee";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            p.size,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+
+/* =========================================================
+   COLLISION
+   ========================================================= */
+
+function checkCollision(
+    player,
+    asteroid
+) {
+
+    const dx =
+        player.x -
+        asteroid.x;
+
+    const dy =
+        player.y -
+        asteroid.y;
+
+    const distance =
+        Math.sqrt(
+            dx * dx +
+            dy * dy
+        );
+
+    const playerRadius =
+        20;
+
+    return (
+        distance <
+        asteroid.size * 0.75 +
+        playerRadius
+    );
+}
+
+
+/* =========================================================
+   PLAYER MOVEMENT
+   ========================================================= */
+
+function updatePlayer(delta) {
+
+    let direction = 0;
+
+    if (keys.left) {
+        direction -= 1;
+    }
+
+    if (keys.right) {
+        direction += 1;
+    }
+
+    player.x +=
+        direction *
+        player.speed *
+        delta *
+        0.06;
+
+    player.x =
+        clamp(
+            player.x,
+            player.width / 2,
+            canvas.clientWidth -
+            player.width / 2
+        );
+
+
+    const targetTilt =
+        direction * 0.16;
+
+    player.tilt +=
+        (targetTilt - player.tilt) *
+        0.12;
+}
+
+
+/* =========================================================
+   SCORE
+   ========================================================= */
+
+function updateScore() {
+
+    scoreElement.textContent =
+        Math.floor(score);
+
+    if (score > bestScore) {
+
+        bestScore =
+            Math.floor(score);
+
+        bestElement.textContent =
+            bestScore;
+
+        localStorage.setItem(
+            "neonDodgerBest",
+            bestScore
+        );
+    }
+}
+
+
+/* =========================================================
+   GAME START
+   ========================================================= */
+
+function startGame() {
+
+    resizeCanvas();
+
+    gameRunning = true;
+
+    paused = false;
+
+    gameOver = false;
+
+    score = 0;
+
+    difficulty = 1;
+
+    spawnTimer = 0;
+
+    asteroids = [];
+
+    particles = [];
+
+    player.x =
+        canvas.clientWidth / 2;
+
+    player.y =
+        canvas.clientHeight - 75;
+
+    player.tilt = 0;
+
+    updateScore();
+
+    createStars();
+
+    overlay.style.display =
+        "none";
+
+    pauseButton.textContent =
+        "⏸ Pause";
+
+    lastTime =
+        performance.now();
+
+    cancelAnimationFrame(
+        animationId
+    );
+
+    animationId =
+        requestAnimationFrame(
+            gameLoop
+        );
+}
+
+
+/* =========================================================
+   GAME OVER
+   ========================================================= */
+
+function endGame() {
+
+    gameRunning = false;
+
+    gameOver = true;
+
+    createExplosion(
+        player.x,
+        player.y,
+        70
+    );
+
+    drawParticles();
+
+    overlayIcon.textContent =
+        "💥";
+
+    overlayTitle.textContent =
+        "MISSION FAILED";
+
+    overlayText.innerHTML =
+        `You survived with a score of
+        <strong style="color:#67e8f9">
+            ${Math.floor(score)}
+        </strong>.<br><br>
+        ${
+            score >= bestScore
+                ? "🏆 New high score!"
+                : "Can you beat your best?"
+        }`;
+
+    startButton.textContent =
+        "PLAY AGAIN";
+
+    overlay.style.display =
+        "flex";
+
+    updateScore();
+}
+
+
+/* =========================================================
+   PAUSE
+   ========================================================= */
+
+function togglePause() {
+
+    if (!gameRunning) {
+        return;
+    }
+
+    paused =
+        !paused;
+
+    if (paused) {
+
+        pauseButton.textContent =
+            "▶ Resume";
+
+        overlayIcon.textContent =
+            "⏸";
+
+        overlayTitle.textContent =
+            "GAME PAUSED";
+
+        overlayText.textContent =
+            "Take a breath. Your mission is waiting.";
+
+        startButton.textContent =
+            "RESUME";
+
+        overlay.style.display =
+            "flex";
+
+    } else {
+
+        overlay.style.display =
+            "none";
+
+        pauseButton.textContent =
+            "⏸ Pause";
+
+        lastTime =
+            performance.now();
+
+        animationId =
+            requestAnimationFrame(
+                gameLoop
+            );
+    }
+}
+
+
+/* =========================================================
+   RESTART
+   ========================================================= */
+
+function restartGame() {
+
+    startGame();
+}
+
+
+/* =========================================================
+   GAME LOOP
+   ========================================================= */
+
+function gameLoop(timestamp) {
+
+    if (!gameRunning || paused) {
+        return;
+    }
+
+    const delta =
+        Math.min(
+            timestamp - lastTime,
+            40
+        );
+
+    lastTime =
+        timestamp;
+
+
+    /* Difficulty */
+
+    difficulty +=
+        delta * 0.000015;
+
+
+    /* Spawn rate */
+
+    spawnTimer +=
+        delta;
+
+    const spawnInterval =
+        Math.max(
+            260,
+            900 -
+            difficulty * 75
+        );
+
+    if (
+        spawnTimer >=
+        spawnInterval
+    ) {
+
+        spawnAsteroid();
+
+        spawnTimer = 0;
+    }
+
+
+    /* Score over time */
+
+    score +=
+        delta * 0.025;
+
+    updateScore();
+
+
+    /* Update */
+
+    updateStars(delta);
+
+    updatePlayer(delta);
+
+    updateAsteroids(delta);
+
+    updateParticles(delta);
+
+
+    /* Draw */
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.clientWidth,
+        canvas.clientHeight
+    );
+
+    drawStars();
+
+    drawAsteroids();
+
+    drawParticles();
+
+    drawPlayer();
+
+
+    animationId =
+        requestAnimationFrame(
+            gameLoop
+        );
+}
+
+
+/* =========================================================
+   KEYBOARD CONTROLS
+   ========================================================= */
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+
+        const key =
+            event.key.toLowerCase();
+
+        if (
+            key === "arrowleft" ||
+            key === "a"
+        ) {
+
+            keys.left = true;
+
+            event.preventDefault();
+        }
+
+        if (
+            key === "arrowright" ||
+            key === "d"
+        ) {
+
+            keys.right = true;
+
+            event.preventDefault();
+        }
+
+        if (
+            key === " " ||
+            key === "p"
+        ) {
+
+            togglePause();
+        }
+
+        if (
+            key === "enter" &&
+            !gameRunning
+        ) {
+
+            startGame();
+        }
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    (event) => {
+
+        const key =
+            event.key.toLowerCase();
+
+        if (
+            key === "arrowleft" ||
+            key === "a"
+        ) {
+
+            keys.left = false;
+        }
+
+        if (
+            key === "arrowright" ||
+            key === "d"
+        ) {
+
+            keys.right = false;
+        }
+    }
+);
+
+
+/* =========================================================
+   MOBILE BUTTONS
+   ========================================================= */
+
+const leftButton =
+    document.getElementById(
+        "left-button"
+    );
+
+const rightButton =
+    document.getElementById(
+        "right-button"
+    );
+
+
+function holdButton(
+    button,
+    direction
+) {
+
+    button.addEventListener(
+        "pointerdown",
+        () => {
+
+            keys[direction] = true;
+        }
+    );
+
+    button.addEventListener(
+        "pointerup",
+        () => {
+
+            keys[direction] = false;
+        }
+    );
+
+    button.addEventListener(
+        "pointerleave",
+        () => {
+
+            keys[direction] = false;
+        }
+    );
+
+    button.addEventListener(
+        "pointercancel",
+        () => {
+
+            keys[direction] = false;
+        }
+    );
+}
+
+
+holdButton(
+    leftButton,
+    "left"
+);
+
+holdButton(
+    rightButton,
+    "right"
+);
+
+
+/* =========================================================
+   BUTTON EVENTS
+   ========================================================= */
+
+startButton.addEventListener(
+    "click",
+    () => {
+
+        if (paused) {
+
+            togglePause();
+
+        } else {
+
+            startGame();
+        }
+    }
+);
+
+
+pauseButton.addEventListener(
+    "click",
+    togglePause
+);
+
+
+restartButton.addEventListener(
+    "click",
+    restartGame
+);
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+resizeCanvas();
+
+createStars();
+
+player.x =
+    canvas.clientWidth / 2;
+
+player.y =
+    canvas.clientHeight - 75;
+
+
+/* Initial background */
+
+ctx.clearRect(
+    0,
+    0,
+    canvas.clientWidth,
+    canvas.clientHeight
+);
+
+drawStars();
+
+</script>
+
+</body>
+</html>
+
